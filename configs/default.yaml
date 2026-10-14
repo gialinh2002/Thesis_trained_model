@@ -1,0 +1,66 @@
+# ---------------------------------------------------------------
+# Gym-workout RL recommender — pipeline configuration
+# Mirrors Rosema et al. "Personalized Recommender Systems for Gym
+# Workouts: A Reinforcement Learning Approach".
+# ---------------------------------------------------------------
+seed: 42
+
+data:
+  # FitRec (Ni, Muhlstein, McAuley, WWW'19). Download page:
+  # https://sites.google.com/eng.ucsd.edu/fitrec-project/home
+  fitrec_url: "https://mcauleylab.ucsd.edu/public_datasets/gdrive/fitrec/endomondoHR.json.gz"
+  raw_path: data/raw/endomondoHR.json.gz
+  max_workouts: 200000          # cap lines read (null = all)
+  min_workouts_per_user: 5
+  profiles_out: data/processed/user_profiles.parquet
+  catalog_path: data/processed/exercise_catalog.csv   # replace with your own catalog if you have one
+  catalog_size: 217
+
+env:
+  mode: FPS                     # EONS | EOS | FPNS | FPS
+  session_length: 8             # T
+  user_pool: dynamic            # static | dynamic
+  set_bins: [2, 3, 4, 5, 6]
+  rep_bins: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  load_bins: {low: 0.20, high: 1.20, n: 21}   # fraction of baseline 1RM
+  history_len: 4                # past sessions kept for inter-session diversity
+
+skip_model:                     # logistic skip probability
+  base: -2.2
+  w_workload: 3.0
+  w_muscle_strain: 1.2
+  w_routine_mismatch: 0.8
+  w_recency: 0.6
+  w_position: 0.3
+  online_lr: 0.15
+
+reward:
+  penalty: -0.5                 # replaces components under threshold
+  components:                   # weight, threshold
+    uniqueness:          {w: 0.15, tau: 0.6}
+    intra_diversity:     {w: 0.15, tau: 0.4}
+    inter_diversity:     {w: 0.10, tau: 0.2}
+    routine_alignment:   {w: 0.15, tau: 0.4}
+    fatigue:             {w: 0.15, tau: 0.3}
+    prescription:        {w: 0.20, tau: 0.4}   # FP envs only
+    persistence:         {w: 0.10, tau: 0.3}   # FP envs only
+
+ppo:
+  total_timesteps: 2000000
+  n_envs: 8
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 256
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  net_arch: [256, 256]
+  out_dir: runs/
+
+eval:
+  episodes: 1000
+
+timeline:
+  weeks: 8

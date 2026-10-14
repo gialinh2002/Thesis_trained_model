@@ -1,0 +1,9 @@
+{
+  "age": 27,
+  "sex": "male",
+  "height_cm": 175,
+  "weight_kg": 72,
+  "goal": "hypertrophy",
+  "experience": "intermediate",
+  "frequency_per_week": 4
+}
